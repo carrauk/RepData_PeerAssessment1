@@ -8,15 +8,85 @@ output:
 
 ## Loading and preprocessing the data
 
+Load the activity data from direct from the zip file provided for the assignment.
+```{r, echo=FALSE}
+ setwd("~/Documents/Data_Sci_Course/RepoducableResearch/RR_assessment1")
+```
 
+```{r load-data, echo=TRUE}
+data <- read.csv(unz("activity.zip", "activity.csv"))
+# convert date from factor to POSIXlt
+data$date <- as.POSIXct(strptime(data$date, format="%Y-%m-%d"))
+```
 
 ## What is mean total number of steps taken per day?
 
+With the help of the dplyr package - the following calculates the mean, median, and sum of the steps recorded per day.
 
+As stated in assignment - null values can be ignored for now - so I have removed them.
+
+```{r , echo=TRUE, warning=FALSE, message=FALSE}
+library(dplyr)
+
+data.smy1 <- tbl_df(data) %>% 
+                group_by(date) %>%
+                summarise_at("steps", funs(sum(.,na.rm=TRUE)))
+
+```
+
+Lets take a look at the distribution of the total number of steps taken each day (sum).
+
+```{r}
+with(data.smy1, 
+     hist(steps, 
+          main="Histogram of total number \n of steps per day", 
+          xlab="Total number of steps per day",
+          ylab="Frequency of days")
+     )
+```
+
+and lets get the median and mean of the total number of steps taken per day
+
+```{r, echo=TRUE}
+data.smy1.mean <- mean(data.smy1$steps)
+data.smy1.median <- median(data.smy1$steps)
+```
+
+So the mean is [`r data.smy1.mean`] and the median is [`r data.smy1.median`]. 
 
 ## What is the average daily activity pattern?
 
+Ok lets get the data into shape for plotting interval against steps. 
 
+Using the dplyr package I will group by interval and take the mean number of steps recorded for that interval across the all the readings (from `r max(data$date)` to `r min(data$date)`).
+
+```{r, echo=TRUE}
+data.smy2 <- tbl_df(data) %>% 
+                group_by(interval) %>% 
+                summarise_at("steps", funs(mean(.,na.rm=TRUE)))
+```
+
+The data above is plotted onto the figure below.
+
+```{r, echo=TRUE}
+with(data.smy2, 
+     {
+             plot(x=interval,
+                  y=steps, 
+                  type="l",
+                  col="blue", 
+                  xlab="Interval (mins)",
+                  ylab="Number of Steps",
+                  main="Mean number of steps recorded per 5-min interval"
+             )
+     })
+```
+
+```{r, echo=TRUE}
+data.smy2.maxline <- data.smy2[order(data.smy2$steps, decreasing=TRUE)[1],]
+```
+
+As can be seen on the chart the interval with the maximum mean number of steps taken is [`r data.smy2.maxline$steps`] from interval [`r data.smy2.maxline$interval`].
 
 ## Imputing missing values
 
