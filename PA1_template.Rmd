@@ -17,6 +17,8 @@ Load the activity data from direct from the zip file provided for the assignment
 data <- read.csv(unz("activity.zip", "activity.csv"))
 # convert date from factor to POSIXlt
 data$date <- as.POSIXct(strptime(data$date, format="%Y-%m-%d"))
+# add weekdays column for later analysis
+data$weekday <- weekdays(data$date)
 ```
 
 ## What is mean total number of steps taken per day?
@@ -90,6 +92,43 @@ As can be seen on the chart the interval with the maximum mean number of steps t
 
 ## Imputing missing values
 
+Looking at the summary for the activity dataset we can see there are a few missing values (NA's) within the steps varible.
+
+```{r, echo=TRUE}
+summary(data)
+```
+
+There are currently 
+
+A simple approach is taken to replace missing values within the data-set. First the average (mean) interval value is calculated. The results of this calculation will replace the missing values within the original dataset.
+
+```{r, echo=TRUE}
+
+data.calc <- tbl_df(data) %>% 
+                        group_by(interval) %>%
+                        summarise_at("steps", funs(mean(.,na.rm=TRUE)))
+                
+# loop through the NA values and assign new value
+data.imp <- data
+data.imp[is.na(data.imp$steps),]$steps <- sapply(data.imp[is.na(data.imp$steps),]$interval, 
+                                                        function(x){
+                                                                return(data.calc$steps[which(data.calc$interval==x)])
+                                                        })
+
+
+```
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+
+```{r, echo=TRUE, message=FALSE}
+
+data.ss.wkend <- grep("S[unday|aturday]", weekdays(data$date))
+data.ss.wkend <- data[data.ss.wkend,]
+
+data.ss.wkday <- grep("Monday|Tuesday|Wednesday|Thursday|Friday", weekdays(data$date))
+data.ss.wkday <- data[data.ss.wkday,]
+
+
+
+```
