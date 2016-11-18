@@ -142,7 +142,7 @@ knitr::kable(summary(data.imp))
 
 The change can be seen with the output from 'Summary' above. There is a change to the 3rd Quandrant value.
 
-Lets see the imputed data in a histogram.
+Lets see the imputed data displayed as a histogram.
 
 
 ```r
