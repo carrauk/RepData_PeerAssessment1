@@ -1,20 +1,13 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Reproducible Research: Peer Assessment 1
 
 
 ## Loading and preprocessing the data
 
 Load the activity data from direct from the zip file provided for the assignment.
-```{r, echo=FALSE}
- # setwd("~/Documents/Data_Sci_Course/RepoducableResearch/RR_assessment1")
-  setwd("~/Documents/_R IUKScripts/RR/repo")
-```
 
-```{r load-data, echo=TRUE}
+
+
+```r
 data <- read.csv(unz("activity.zip", "activity.csv"))
 # convert date from factor to POSIXlt
 data$date <- as.POSIXct(strptime(data$date, format="%Y-%m-%d"))
@@ -28,18 +21,19 @@ With the help of the dplyr package - the following calculates the mean, median, 
 
 As stated in assignment - null values can be ignored for now - so I have removed them.
 
-```{r , echo=TRUE, warning=FALSE, message=FALSE}
+
+```r
 library(dplyr)
 
 data.smy1 <- tbl_df(data) %>% 
                 group_by(date) %>%
                 summarise_at("steps", funs(sum(.,na.rm=TRUE)))
-
 ```
 
 Lets take a look at the distribution of the total number of steps taken each day (sum).
 
-```{r}
+
+```r
 with(data.smy1, 
      hist(steps, 
           main="Histogram of total number \n of steps per day", 
@@ -48,22 +42,26 @@ with(data.smy1,
      )
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
+
 and lets get the median and mean of the total number of steps taken per day
 
-```{r, echo=TRUE}
+
+```r
 data.smy1.mean <- mean(data.smy1$steps)
 data.smy1.median <- median(data.smy1$steps)
 ```
 
-The mean is [`r data.smy1.mean`] and the median is [`r data.smy1.median`]. 
+The mean is [9354.2295082] and the median is [10395]. 
 
 ## What is the average daily activity pattern?
 
 Ok lets get the data into shape for plotting interval against steps. 
 
-Using the dplyr package I will group by interval and take the mean number of steps recorded for that interval across the all the readings (from `r max(data$date)` to `r min(data$date)`).
+Using the dplyr package I will group by interval and take the mean number of steps recorded for that interval across the all the readings (from 2012-11-30 to 2012-10-01).
 
-```{r, echo=TRUE}
+
+```r
 data.smy2 <- tbl_df(data) %>% 
                 group_by(interval) %>% 
                 summarise_at("steps", funs(mean(.,na.rm=TRUE)))
@@ -71,10 +69,8 @@ data.smy2 <- tbl_df(data) %>%
 
 The data above is plotted onto the figure below.
 
-```{r, echo=TRUE}
 
-
-
+```r
 with(data.smy2, 
      {
              plot(x=interval,
@@ -92,24 +88,35 @@ abline(h=data.smy2.maxline$steps, col="red")
 abline(v=data.smy2.maxline$interval, col="red")
 ```
 
-```{r, echo=TRUE}
+![](PA1_template_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
-```
 
-As can be seen on the chart the interval with the maximum mean number of steps taken is [`r data.smy2.maxline$steps`] from interval [`r data.smy2.maxline$interval`].
+
+As can be seen on the chart the interval with the maximum mean number of steps taken is [206.1698113] from interval [835].
 
 ## Imputing missing values
 
 Looking at the summary for the activity dataset we can see there are a few missing values (NA's) within the steps variable.
 
-```{r, echo=TRUE}
+
+```r
 knitr::kable(summary(data))
 ```
 
+         steps             date                        interval        weekday        
+---  ---------------  ----------------------------  ---------------  -----------------
+     Min.   :  0.00   Min.   :2012-10-01 00:00:00   Min.   :   0.0   Length:17568     
+     1st Qu.:  0.00   1st Qu.:2012-10-16 00:00:00   1st Qu.: 588.8   Class :character 
+     Median :  0.00   Median :2012-10-31 00:00:00   Median :1177.5   Mode  :character 
+     Mean   : 37.38   Mean   :2012-10-30 23:32:27   Mean   :1177.5   NA               
+     3rd Qu.: 12.00   3rd Qu.:2012-11-15 00:00:00   3rd Qu.:1766.2   NA               
+     Max.   :806.00   Max.   :2012-11-30 00:00:00   Max.   :2355.0   NA               
+     NA's   :2304     NA                            NA               NA               
+
 A simple approach is taken to replace missing values within the data-set. First the average (mean) interval value is calculated. The results of this calculation will replace the missing values within the original dataset.
 
-```{r, echo=TRUE}
 
+```r
 data.calc <- tbl_df(data) %>% 
                         group_by(interval) %>%
                         summarise_at("steps", funs(mean(.,na.rm=TRUE)))
@@ -122,14 +129,23 @@ data.imp[is.na(data.imp$steps),]$steps <- sapply(data.imp[is.na(data.imp$steps),
                                                         })
 
 knitr::kable(summary(data.imp))
-
 ```
+
+         steps             date                        interval        weekday        
+---  ---------------  ----------------------------  ---------------  -----------------
+     Min.   :  0.00   Min.   :2012-10-01 00:00:00   Min.   :   0.0   Length:17568     
+     1st Qu.:  0.00   1st Qu.:2012-10-16 00:00:00   1st Qu.: 588.8   Class :character 
+     Median :  0.00   Median :2012-10-31 00:00:00   Median :1177.5   Mode  :character 
+     Mean   : 37.38   Mean   :2012-10-30 23:32:27   Mean   :1177.5   NA               
+     3rd Qu.: 27.00   3rd Qu.:2012-11-15 00:00:00   3rd Qu.:1766.2   NA               
+     Max.   :806.00   Max.   :2012-11-30 00:00:00   Max.   :2355.0   NA               
 
 The change can be seen with the output from 'Summary' above. There is a change to the 3rd Quandrant value.
 
 Lets see the imputed data in a histogram.
 
-```{r , echo=TRUE, warning=FALSE, message=FALSE}
+
+```r
 data.imp.smy1 <- tbl_df(data.imp) %>% 
                 group_by(date) %>%
                 summarise_at("steps", funs(sum(.,na.rm=TRUE)))
@@ -143,23 +159,26 @@ with(data.imp.smy1,
      )
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+
 
 and lets get the median and mean of the total number of steps taken per day
 
-```{r, echo=TRUE}
+
+```r
 data.imp.smy1.mean <- mean(data.imp.smy1$steps)
 data.imp.smy1.median <- median(data.imp.smy1$steps)
 ```
 
-The mean is [`r data.imp.smy1.mean`] and the median is [`r data.imp.smy1.median`]. 
+The mean is [1.0766189\times 10^{4}] and the median is [1.0766189\times 10^{4}]. 
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
 The following code generates a histogram for steps taken on weekdays and steps taken on weekends.
 
-```{r, echo=TRUE, message=FALSE}
 
+```r
 data.ss.wkend <- grep("S[unday|aturday]", weekdays(data$date))
 data.ss.wkend <- data[data.ss.wkend,]
 
@@ -199,8 +218,9 @@ with(data.ss.wkend.smy,
                   main="Weekend"
              )
      })
-
 ```
+
+![](PA1_template_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
 The charts shows that there is a difference in activity. On weekdays there is a bigger peak in the morning before leveling off for the rest of the day. On weekends the peak is not as high as week days however there is more activity over a weekend day.
 
